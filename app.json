@@ -1,0 +1,15 @@
+{
+    "id": "fffc200d-3942-461d-9b47-4a7b8aed182b",
+    "version": "0.0.1",
+    "requiredApiVersion": "^1.4.0",
+    "iconFile": "icon.png",
+    "author": {
+        "name": "sayan banerjee",
+        "homepage": "na",
+        "support": "na"
+    },
+    "name": "quick reply",
+    "nameSlug": "quick-reply",
+    "classFile": "QuickReplyApp.ts",
+    "description": "quick reply"
+}

@@ -8,8 +8,9 @@
         "homepage": "na",
         "support": "na"
     },
-    "name": "quick reply",
+    "name": "Quick Reply",
     "nameSlug": "quick-reply",
     "classFile": "QuickReplyApp.ts",
-    "description": "quick reply"
+    "description": "quick",
+    "implements": []
 }

@@ -11,6 +11,8 @@ import {
     SlashCommandContext,
 } from "@rocket.chat/apps-engine/definition/slashcommands";
 import { QuickReplyApp } from "../../QuickReplyApp";
+import { ICommandUtilityParams } from "../../definition/command/ICommandUtility";
+import { CommandUtility } from "./CommandUtility";
 
 export default class QuickReplyCommand implements ISlashCommand {
     constructor(private readonly app: QuickReplyApp) {}
@@ -27,6 +29,29 @@ export default class QuickReplyCommand implements ISlashCommand {
         http: IHttp,
         persis: IPersistence
     ): Promise<void> {
-        console.log("QuickReplyCommand");
+        const params = context.getArguments();
+        const sender = context.getSender();
+        const room = context.getRoom();
+        const triggerId = context.getTriggerId();
+        const threadId = context.getThreadId();
+
+        const userId = sender.id;
+        const roomId = room.id;
+
+        const commandUtilityParams: ICommandUtilityParams = {
+            params,
+            sender,
+            room,
+            triggerId,
+            threadId,
+            read,
+            modify,
+            http,
+            persis,
+            app: this.app,
+        };
+
+        const commandUtility = new CommandUtility(commandUtilityParams);
+        await commandUtility.resolveCommand();
     }
 }

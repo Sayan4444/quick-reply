@@ -1,7 +1,11 @@
 import {
     IAppAccessors,
     IConfigurationExtend,
+    IHttp,
     ILogger,
+    IModify,
+    IPersistence,
+    IRead,
 } from "@rocket.chat/apps-engine/definition/accessors";
 import { App } from "@rocket.chat/apps-engine/definition/App";
 import { IAppInfo } from "@rocket.chat/apps-engine/definition/metadata";
@@ -9,6 +13,11 @@ import { ElementBuilder } from "./src/lib/ElementBuilder";
 import { BlockBuilder } from "./src/lib/BlockBuilder";
 import { IAppUtils } from "./definition/lib/IAppUtils";
 import QuickReplyCommand from "./src/commands/QuickReplyCommand";
+import {
+    IUIKitResponse,
+    UIKitBlockInteractionContext,
+} from "@rocket.chat/apps-engine/definition/uikit";
+import { ExecuteBlockActionHandler } from "./src/handler/ExecuteBlockActionHandler";
 
 export class QuickReplyApp extends App {
     private elementBuilder: ElementBuilder;
@@ -32,5 +41,24 @@ export class QuickReplyApp extends App {
             elementBuilder: this.elementBuilder,
             blockBuilder: this.blockBuilder,
         };
+    }
+
+    public async executeBlockActionHandler(
+        context: UIKitBlockInteractionContext,
+        read: IRead,
+        http: IHttp,
+        persistence: IPersistence,
+        modify: IModify
+    ): Promise<IUIKitResponse> {
+        const handler = new ExecuteBlockActionHandler(
+            this,
+            read,
+            http,
+            persistence,
+            modify,
+            context
+        );
+
+        return await handler.handleActions();
     }
 }

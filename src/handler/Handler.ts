@@ -11,7 +11,8 @@ import {
 import { RoomInteractionStorage } from "../storage/RoomInteraction";
 import { IMessage } from "@rocket.chat/apps-engine/definition/messages";
 import { ModalInteractionStorage } from "../storage/ModalInteraction";
-import { createCommentContextualBar } from "../modal/createCommentContextualBar";
+import { createSaveMessageContextualBar } from "../modal/createSaveMessageContextualBar";
+import { SaveMessage } from "../../enum/modals/SaveMessage";
 
 export class Handler implements IHandler {
     public app: QuickReplyApp;
@@ -55,7 +56,7 @@ export class Handler implements IHandler {
             this.persis,
             persistenceRead,
             userId,
-            "save-contexualbar-view-id"
+            SaveMessage.VIEW_ID
         );
 
         await Promise.all([
@@ -63,13 +64,12 @@ export class Handler implements IHandler {
             modalInteraction.clearAllInteractionActionId(),
         ]);
 
-        const contextualBar = await createCommentContextualBar(
+        const contextualBar = await createSaveMessageContextualBar(
             this.app,
             modalInteraction
         );
 
         if (contextualBar instanceof Error) {
-            // Something went Wrong Propably SearchPageComponent Couldn't Fetch the Pages
             this.app.getLogger().error(contextualBar.message);
             return;
         }

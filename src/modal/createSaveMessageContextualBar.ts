@@ -1,0 +1,100 @@
+import { IUIKitSurfaceViewParam } from "@rocket.chat/apps-engine/definition/accessors";
+import { QuickReplyApp } from "../../QuickReplyApp";
+import { ModalInteractionStorage } from "../storage/ModalInteraction";
+import { Block, SectionBlock, TextObjectType } from "@rocket.chat/ui-kit";
+import { inputElementComponent } from "./common/inputElementComponent";
+import {
+    ButtonStyle,
+    UIKitSurfaceType,
+} from "@rocket.chat/apps-engine/definition/uikit";
+import { SaveMessage } from "../../enum/modals/SaveMessage";
+import { ButtonInSectionComponent } from "./common/buttonInSectionComponent";
+
+export async function createSaveMessageContextualBar(
+    app: QuickReplyApp,
+    modalInteraction: ModalInteractionStorage,
+    pageId?: string,
+    refresh?: boolean
+): Promise<IUIKitSurfaceViewParam | Error> {
+    const { elementBuilder, blockBuilder } = app.getUtils();
+
+    const blocks: Block[] = [];
+
+    const idInput = inputElementComponent(
+        {
+            app,
+            label: SaveMessage.ID_INPUT_LABEL,
+            placeholder: SaveMessage.ID_INPUT_PLACEHOLDER,
+            optional: false,
+            dispatchActionConfigOnInput: true,
+            initialValue: "",
+        },
+        {
+            actionId: SaveMessage.ID_INPUT_ACTION,
+            blockId: SaveMessage.ID_INPUT_BLOCK,
+        }
+    );
+    const messageInput = inputElementComponent(
+        {
+            app,
+            label: SaveMessage.MESSAGE_INPUT_LABEL,
+            placeholder: SaveMessage.MESSAGE_INPUT_PLACEHOLDER,
+            multiline: true,
+            optional: false,
+            initialValue: "",
+            dispatchActionConfigOnInput: true,
+        },
+        {
+            actionId: SaveMessage.MESSAGE_INPUT_ACTION,
+            blockId: SaveMessage.MESSAGE_INPUT_BLOCK,
+        }
+    );
+
+    const saveMessageButton = ButtonInSectionComponent(
+        {
+            app,
+            buttonText: SaveMessage.SAVE_BUTTON_TEXT,
+            style: ButtonStyle.PRIMARY,
+        },
+        {
+            actionId: SaveMessage.SAVE_BUTTON_ACTION,
+            blockId: SaveMessage.SAVE_BUTTON_BLOCK,
+        }
+    );
+    const divider = blockBuilder.createDividerBlock();
+    const mandatoryBlocks: Block[] = [
+        idInput,
+        messageInput,
+        saveMessageButton,
+        divider,
+    ];
+
+    blocks.push(...mandatoryBlocks);
+
+    const id = blockBuilder.createContextBlock({
+        contextElements: ["**blockId**"],
+    });
+
+    const message: SectionBlock = blockBuilder.createSectionBlock({
+        text: "comment",
+    });
+    blocks.push(id, message, divider);
+    const close = elementBuilder.addButton(
+        { text: SaveMessage.CLOSE_BUTTON_TEXT, style: ButtonStyle.DANGER },
+        {
+            actionId: SaveMessage.CLOSE_ACTION,
+            blockId: SaveMessage.CLOSE_BLOCK,
+        }
+    );
+
+    return {
+        id: SaveMessage.VIEW_ID,
+        type: UIKitSurfaceType.CONTEXTUAL_BAR,
+        title: {
+            type: TextObjectType.MRKDWN,
+            text: SaveMessage.TITLE,
+        },
+        blocks,
+        close,
+    };
+}

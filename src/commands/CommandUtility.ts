@@ -12,7 +12,7 @@ import {
 } from "../../definition/command/ICommandUtility";
 import { CommandParam } from "../../enum/CommandParam";
 import { QuickReplyApp } from "../../QuickReplyApp";
-import { Handler } from "../handler/handler";
+import { Handler } from "../handler/Handler";
 import { sendHelperNotification } from "../helper/message";
 
 export class CommandUtility implements ICommandUtility {

@@ -97,7 +97,7 @@ export class ModalInteractionStorage implements IModalInteractionStorage {
         );
     }
 
-    public async storePagesOrDatabase(
+    public async storeSavedReplies(
         records: object,
         workspaceId: string
     ): Promise<void> {
@@ -118,7 +118,7 @@ export class ModalInteractionStorage implements IModalInteractionStorage {
         );
     }
 
-    public async getPagesOrDatabase(
+    public async getSavedRepliesById(
         workspaceId: string
     ): Promise<object | undefined> {
         const userAssociation = new RocketChatAssociationRecord(
@@ -139,7 +139,7 @@ export class ModalInteractionStorage implements IModalInteractionStorage {
         return result;
     }
 
-    public async clearPagesOrDatabase(workspaceId: string): Promise<void> {
+    public async clearSavedRepliesById(workspaceId: string): Promise<void> {
         const userAssociation = new RocketChatAssociationRecord(
             RocketChatAssociationModel.USER,
             `${this.userId}`

@@ -68,17 +68,23 @@ export async function createSaveMessageContextualBar(
         saveMessageButton,
         divider,
     ];
-
     blocks.push(...mandatoryBlocks);
+    const savedReplies = await modalInteraction.getSavedRepliesState(
+        SaveMessage.VIEW_ID
+    );
+    if (savedReplies) {
+        const { value } = savedReplies;
+        value.forEach((reply) => {
+            const id = blockBuilder.createContextBlock({
+                contextElements: [`Reply id:- **${reply.id}**`],
+            });
+            const message: SectionBlock = blockBuilder.createSectionBlock({
+                text: `Message:- ${reply.message}`,
+            });
+            blocks.push(id, message, divider);
+        });
+    }
 
-    const id = blockBuilder.createContextBlock({
-        contextElements: ["**blockId**"],
-    });
-
-    const message: SectionBlock = blockBuilder.createSectionBlock({
-        text: "comment",
-    });
-    blocks.push(id, message, divider);
     const close = elementBuilder.addButton(
         { text: SaveMessage.CLOSE_BUTTON_TEXT, style: ButtonStyle.DANGER },
         {

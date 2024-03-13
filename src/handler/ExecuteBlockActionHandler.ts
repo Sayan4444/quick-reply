@@ -8,6 +8,7 @@ import {
     IModify,
     IPersistence,
     IRead,
+    IUIKitSurfaceViewParam,
 } from "@rocket.chat/apps-engine/definition/accessors";
 import { ModalInteractionStorage } from "../storage/ModalInteractionStorage";
 import { RoomInteractionStorage } from "../storage/RoomInteraction";
@@ -15,6 +16,7 @@ import { SaveMessage } from "../../enum/modals/SaveMessage";
 import { IRoom } from "@rocket.chat/apps-engine/definition/rooms";
 import { IUser } from "@rocket.chat/apps-engine/definition/users";
 import { createSaveMessageContextualBar } from "../modal/createSaveMessageContextualBar";
+import { ISavedReplies } from "../../definition/lib/IModalInteraction";
 
 export class ExecuteBlockActionHandler {
     private context: UIKitBlockInteractionContext;
@@ -36,37 +38,20 @@ export class ExecuteBlockActionHandler {
         const persistenceRead = this.read.getPersistenceReader();
         const modalInteraction = new ModalInteractionStorage(
             this.persistence,
-            persistenceRead,
-            user.id,
-            container.id
-        );
-
-        const roomInteractionStorage = new RoomInteractionStorage(
-            this.persistence,
-            persistenceRead,
-            user.id
+            persistenceRead
         );
 
         switch (actionId) {
             case SaveMessage.SAVE_BUTTON_ACTION: {
-                this.handleSaveMessage(
-                    modalInteraction,
-                    roomInteractionStorage
-                );
+                this.handleSaveMessage(modalInteraction);
                 break;
             }
             case SaveMessage.ID_INPUT_ACTION: {
-                return this.handleIdInputAction(
-                    modalInteraction,
-                    roomInteractionStorage
-                );
+                return this.handleIdInputAction(modalInteraction);
                 break;
             }
             case SaveMessage.MESSAGE_INPUT_ACTION: {
-                return this.handleMessageInputAction(
-                    modalInteraction,
-                    roomInteractionStorage
-                );
+                return this.handleMessageInputAction(modalInteraction);
                 break;
             }
         }
@@ -74,22 +59,19 @@ export class ExecuteBlockActionHandler {
     }
 
     private async handleIdInputAction(
-        modalInteraction: ModalInteractionStorage,
-        roomInteractionStorage: RoomInteractionStorage
+        modalInteraction: ModalInteractionStorage
     ): Promise<IUIKitResponse> {
         const { value, container } = this.context.getInteractionData();
 
         if (value) {
-            await modalInteraction.storeInputElementState(
+            await modalInteraction.storeInputState(
                 SaveMessage.ID_INPUT_ACTION,
                 {
                     value,
                 }
             );
         } else {
-            await modalInteraction.clearInputElementState(
-                SaveMessage.ID_INPUT_ACTION
-            );
+            await modalInteraction.clearState(SaveMessage.ID_INPUT_ACTION);
         }
 
         return this.context.getInteractionResponder().viewErrorResponse({
@@ -98,22 +80,19 @@ export class ExecuteBlockActionHandler {
         });
     }
     private async handleMessageInputAction(
-        modalInteraction: ModalInteractionStorage,
-        roomInteractionStorage: RoomInteractionStorage
+        modalInteraction: ModalInteractionStorage
     ): Promise<IUIKitResponse> {
         const { value, container } = this.context.getInteractionData();
 
         if (value) {
-            await modalInteraction.storeInputElementState(
+            await modalInteraction.storeInputState(
                 SaveMessage.MESSAGE_INPUT_ACTION,
                 {
                     value,
                 }
             );
         } else {
-            await modalInteraction.clearInputElementState(
-                SaveMessage.MESSAGE_INPUT_ACTION
-            );
+            await modalInteraction.clearState(SaveMessage.MESSAGE_INPUT_ACTION);
         }
 
         return this.context.getInteractionResponder().viewErrorResponse({
@@ -123,62 +102,58 @@ export class ExecuteBlockActionHandler {
     }
 
     public async handleSaveMessage(
-        modalInteraction: ModalInteractionStorage,
-        roomInteractionStorage: RoomInteractionStorage
+        modalInteraction: ModalInteractionStorage
     ): Promise<IUIKitResponse> {
-        const { user, container, triggerId, value } =
-            this.context.getInteractionData();
-        const roomId = await roomInteractionStorage.getInteractionRoomId();
-        const room = (await this.read.getRoomReader().getById(roomId)) as IRoom;
-        const messageId = await modalInteraction.getInputElementState(
+        const messageId = await modalInteraction.getInputState(
             SaveMessage.ID_INPUT_ACTION
         );
-        const message = await modalInteraction.getInputElementState(
+        const message = await modalInteraction.getInputState(
             SaveMessage.MESSAGE_INPUT_ACTION
         );
-        await modalInteraction.clearInputElementState(
-            SaveMessage.ID_INPUT_ACTION
-        );
-        await modalInteraction.clearInputElementState(
-            SaveMessage.MESSAGE_INPUT_ACTION
-        );
-        const savedReplies = (await modalInteraction.getInputElementState(
-            SaveMessage.VIEW_ID
-        )) as { value: [] };
+        if (!message || !messageId)
+            return this.context.getInteractionResponder().errorResponse();
+        console.log(messageId);
 
-        await modalInteraction.storeInputElementState(SaveMessage.VIEW_ID, {
-            value: [
-                ...savedReplies?.value,
-                {
-                    messageId,
-                    message,
-                },
-            ],
-        });
-        return this.handleUpdateOfSaveMessageContextualBar(
-            user,
-            room,
-            modalInteraction
+        // await modalInteraction.clearState(SaveMessage.ID_INPUT_ACTION);
+        // await modalInteraction.clearState(SaveMessage.MESSAGE_INPUT_ACTION);
+        const currentReply = { id: messageId.value, message: message.value };
+        const oldValue = await modalInteraction.getSavedRepliesState(
+            SaveMessage.VIEW_ID
         );
+        let newValues;
+        if (!oldValue) newValues = [currentReply];
+        else {
+            const { value } = oldValue;
+            newValues = [currentReply, ...value];
+        }
+
+        await modalInteraction.storeSavedRepliesState(SaveMessage.VIEW_ID, {
+            value: newValues,
+        });
+        return this.handleUpdateOfSaveMessageContextualBar(modalInteraction);
     }
 
     private async handleUpdateOfSaveMessageContextualBar(
-        user: IUser,
-        room: IRoom,
         modalInteraction: ModalInteractionStorage
     ): Promise<IUIKitResponse> {
+        const { user, triggerId } = this.context.getInteractionData();
+
         const contextualBar = await createSaveMessageContextualBar(
             this.app,
             modalInteraction
         );
-
         if (contextualBar instanceof Error) {
             this.app.getLogger().error(contextualBar.message);
             return this.context.getInteractionResponder().errorResponse();
         }
 
-        return this.context
-            .getInteractionResponder()
-            .updateContextualBarViewResponse(contextualBar);
+        await this.modify.getUiController().updateSurfaceView(
+            contextualBar,
+            {
+                triggerId,
+            },
+            user
+        );
+        return this.context.getInteractionResponder().successResponse();
     }
 }

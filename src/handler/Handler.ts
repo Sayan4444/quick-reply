@@ -44,25 +44,14 @@ export class Handler implements IHandler {
         );
     }
 
-    public async saveQuickReply(
-        update?: boolean,
-        message?: IMessage
-    ): Promise<void> {
-        const userId = this.sender.id;
-        const roomId = this.room.id;
-
+    public async saveQuickReply(): Promise<void> {
         const persistenceRead = this.read.getPersistenceReader();
         const modalInteraction = new ModalInteractionStorage(
             this.persis,
-            persistenceRead,
-            userId,
-            SaveMessage.VIEW_ID
+            persistenceRead
         );
-
-        await Promise.all([
-            this.roomInteractionStorage.storeInteractionRoomId(roomId),
-            modalInteraction.clearAllInteractionActionId(),
-        ]);
+        await modalInteraction.clearState(SaveMessage.ID_INPUT_ACTION);
+        await modalInteraction.clearState(SaveMessage.MESSAGE_INPUT_ACTION);
 
         const contextualBar = await createSaveMessageContextualBar(
             this.app,

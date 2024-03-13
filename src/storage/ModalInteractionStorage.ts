@@ -1,4 +1,8 @@
-import { IModalInteractionStorage } from "../../definition/lib/IModalInteraction";
+import {
+    IModalInteractionStorage,
+    IInputStatevalue,
+    ISavedReplies,
+} from "../../definition/lib/IModalInteraction";
 import {
     IPersistence,
     IPersistenceRead,
@@ -7,51 +11,80 @@ import {
     RocketChatAssociationModel,
     RocketChatAssociationRecord,
 } from "@rocket.chat/apps-engine/definition/metadata";
+
 export class ModalInteractionStorage implements IModalInteractionStorage {
     constructor(
         private readonly persistence: IPersistence,
         private readonly persistenceRead: IPersistenceRead
     ) {}
 
-    public async storeState(key: string, value: object): Promise<void> {
+    private async getState(key: string): Promise<Object | undefined> {
+        const association = new RocketChatAssociationRecord(
+            RocketChatAssociationModel.USER,
+            key
+        );
+
+        const [result] = await this.persistenceRead.readByAssociation(
+            association
+        );
+
+        return result;
+    }
+    private async storeState(key: string, value: object): Promise<void> {
         // you get key and value
         // you find it in the storage
         // if it exists, you update it
         // if it doesn't exist, you create it
-        // const association = new RocketChatAssociationRecord(
-        //     RocketChatAssociationModel.USER,
-        //     associate
-        // );
-        // const oldState = await this.persistenceRead.readByAssociation(association);
-        // if (oldState.length)
-        //     await this.persistence.updateByAssociations(
-        //         [association],
-        //         state,
-        //         true
-        //     );
+        const association = new RocketChatAssociationRecord(
+            RocketChatAssociationModel.USER,
+            key
+        );
+        const [oldState] = await this.persistenceRead.readByAssociation(
+            association
+        );
+        if (oldState)
+            await this.persistence.updateByAssociation(
+                association,
+                value,
+                true
+            );
+        else await this.persistence.createWithAssociation(value, association);
     }
 
-    // public async getInputElementState(
-    //     associate: string
-    // ): Promise<object | undefined> {
-    //     const association = new RocketChatAssociationRecord(
-    //         RocketChatAssociationModel.USER,
-    //         `${this.userId}#${this.viewId}#${associate}`
-    //     );
+    public async storeInputState(
+        key: string,
+        value: IInputStatevalue
+    ): Promise<void> {
+        await this.storeState(key, value);
+    }
 
-    //     const [result] = (await this.persistenceRead.readByAssociation(
-    //         association
-    //     )) as Array<object>;
+    public async storeSavedRepliesState(
+        key: string,
+        value: ISavedReplies
+    ): Promise<void> {
+        await this.storeState(key, value);
+    }
 
-    //     return result;
-    // }
+    public async getInputState(
+        key: string
+    ): Promise<IInputStatevalue | undefined> {
+        const result = await this.getState(key);
+        return result as IInputStatevalue;
+    }
 
-    // public async clearInputElementState(associate: string): Promise<void> {
-    //     const association = new RocketChatAssociationRecord(
-    //         RocketChatAssociationModel.USER,
-    //         `${this.userId}#${this.viewId}#${associate}`
-    //     );
+    public async getSavedRepliesState(
+        key: string
+    ): Promise<ISavedReplies | undefined> {
+        const result = await this.getState(key);
+        return result as ISavedReplies;
+    }
 
-    //     await this.persistence.removeByAssociation(association);
-    // }
+    public async clearState(key: string): Promise<void> {
+        const association = new RocketChatAssociationRecord(
+            RocketChatAssociationModel.USER,
+            key
+        );
+
+        await this.persistence.removeByAssociation(association);
+    }
 }

@@ -17,4 +17,7 @@ export enum SaveMessage {
     SAVE_BUTTON_TEXT = "Save Message",
     SAVE_BUTTON_ACTION = "save-message-save-button-action-id",
     SAVE_BUTTON_BLOCK = "save-message-save-button-block-id",
+    DELETE_BUTTON_TEXT = "Delete",
+    DELETE_BUTTON_ACTION = "save-message-delete-button-action-id",
+    DELETE_BUTTON_BLOCK = "save-message-delete-button-block-id",
 }

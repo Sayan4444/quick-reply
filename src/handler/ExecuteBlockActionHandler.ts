@@ -8,15 +8,10 @@ import {
     IModify,
     IPersistence,
     IRead,
-    IUIKitSurfaceViewParam,
 } from "@rocket.chat/apps-engine/definition/accessors";
 import { ModalInteractionStorage } from "../storage/ModalInteractionStorage";
-import { RoomInteractionStorage } from "../storage/RoomInteraction";
 import { SaveMessage } from "../../enum/modals/SaveMessage";
-import { IRoom } from "@rocket.chat/apps-engine/definition/rooms";
-import { IUser } from "@rocket.chat/apps-engine/definition/users";
 import { createSaveMessageContextualBar } from "../modal/createSaveMessageContextualBar";
-import { ISavedReplies } from "../../definition/lib/IModalInteraction";
 import { sendHelperNotification } from "../helper/message";
 import { Messages } from "../../enum/messages";
 
@@ -51,6 +46,9 @@ export class ExecuteBlockActionHandler {
             }
             case SaveMessage.MESSAGE_INPUT_ACTION: {
                 return this.handleMessageInputAction(modalInteraction);
+            }
+            case SaveMessage.DELETE_BUTTON_ACTION: {
+                return this.handleDeleteButtonAction(modalInteraction);
             }
         }
         return this.context.getInteractionResponder().successResponse();
@@ -205,5 +203,21 @@ export class ExecuteBlockActionHandler {
             user
         );
         return this.context.getInteractionResponder().successResponse();
+    }
+    private async handleDeleteButtonAction(
+        modalInteraction: ModalInteractionStorage
+    ): Promise<IUIKitResponse> {
+        const { value: id } = this.context.getInteractionData();
+        const savedReplies = await modalInteraction.getSavedRepliesState(
+            SaveMessage.VIEW_ID
+        );
+        if (savedReplies) {
+            const { value } = savedReplies;
+            const newReplies = value.filter((reply) => reply.id !== id);
+            await modalInteraction.storeSavedRepliesState(SaveMessage.VIEW_ID, {
+                value: newReplies,
+            });
+        }
+        return this.handleUpdateOfSaveMessageContextualBar(modalInteraction);
     }
 }

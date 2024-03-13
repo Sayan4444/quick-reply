@@ -81,7 +81,19 @@ export async function createSaveMessageContextualBar(
             const message: SectionBlock = blockBuilder.createSectionBlock({
                 text: `Message:- ${reply.message}`,
             });
-            blocks.push(id, message, divider);
+            const deleteMessageButton = ButtonInSectionComponent(
+                {
+                    app,
+                    buttonText: SaveMessage.DELETE_BUTTON_TEXT,
+                    style: ButtonStyle.DANGER,
+                    value: reply.id,
+                },
+                {
+                    actionId: SaveMessage.DELETE_BUTTON_ACTION,
+                    blockId: SaveMessage.DELETE_BUTTON_BLOCK,
+                }
+            );
+            blocks.push(id, message, deleteMessageButton, divider);
         });
     }
 

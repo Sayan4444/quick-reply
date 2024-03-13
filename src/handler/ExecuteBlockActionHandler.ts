@@ -32,15 +32,13 @@ export class ExecuteBlockActionHandler {
     }
 
     public async handleActions(): Promise<IUIKitResponse> {
-        const { actionId, user, room, container, blockId } =
-            this.context.getInteractionData();
+        const { actionId } = this.context.getInteractionData();
 
         const persistenceRead = this.read.getPersistenceReader();
         const modalInteraction = new ModalInteractionStorage(
             this.persistence,
             persistenceRead
         );
-
         switch (actionId) {
             case SaveMessage.SAVE_BUTTON_ACTION: {
                 this.handleSaveMessage(modalInteraction);
@@ -48,11 +46,9 @@ export class ExecuteBlockActionHandler {
             }
             case SaveMessage.ID_INPUT_ACTION: {
                 return this.handleIdInputAction(modalInteraction);
-                break;
             }
             case SaveMessage.MESSAGE_INPUT_ACTION: {
                 return this.handleMessageInputAction(modalInteraction);
-                break;
             }
         }
         return this.context.getInteractionResponder().successResponse();
@@ -101,7 +97,7 @@ export class ExecuteBlockActionHandler {
         });
     }
 
-    public async handleSaveMessage(
+    private async handleSaveMessage(
         modalInteraction: ModalInteractionStorage
     ): Promise<IUIKitResponse> {
         const messageId = await modalInteraction.getInputState(

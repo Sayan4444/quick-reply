@@ -14,6 +14,7 @@ import { CommandParam } from "../../enum/CommandParam";
 import { QuickReplyApp } from "../../QuickReplyApp";
 import { Handler } from "../handler/Handler";
 import { sendHelperNotification } from "../helper/message";
+import { Messages } from "../../enum/messages";
 
 export class CommandUtility implements ICommandUtility {
     public app: QuickReplyApp;
@@ -87,6 +88,16 @@ export class CommandUtility implements ICommandUtility {
         switch (this.params[0].toLowerCase()) {
             case CommandParam.SAVE: {
                 await handler.saveQuickReply();
+                break;
+            }
+            case CommandParam.HELP: {
+                await sendHelperNotification(
+                    this.read,
+                    this.modify,
+                    this.sender,
+                    this.room,
+                    Messages.HELPER_COMMANDS
+                );
                 break;
             }
             default: {

@@ -35,9 +35,6 @@ export default class QuickReplyCommand implements ISlashCommand {
         const triggerId = context.getTriggerId();
         const threadId = context.getThreadId();
 
-        const userId = sender.id;
-        const roomId = room.id;
-
         const commandUtilityParams: ICommandUtilityParams = {
             params,
             sender,

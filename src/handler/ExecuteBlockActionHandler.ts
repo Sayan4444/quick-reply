@@ -17,6 +17,8 @@ import { IRoom } from "@rocket.chat/apps-engine/definition/rooms";
 import { IUser } from "@rocket.chat/apps-engine/definition/users";
 import { createSaveMessageContextualBar } from "../modal/createSaveMessageContextualBar";
 import { ISavedReplies } from "../../definition/lib/IModalInteraction";
+import { sendHelperNotification } from "../helper/message";
+import { Messages } from "../../enum/messages";
 
 export class ExecuteBlockActionHandler {
     private context: UIKitBlockInteractionContext;
@@ -106,10 +108,41 @@ export class ExecuteBlockActionHandler {
         const message = await modalInteraction.getInputState(
             SaveMessage.MESSAGE_INPUT_ACTION
         );
-        if (!message || !messageId)
+        const { user, room } = this.context.getInteractionData();
+        //check if message is present
+        if (!message || !message.value.trim()) {
+            await sendHelperNotification(
+                this.read,
+                this.modify,
+                user,
+                room!,
+                Messages.NO_MESSAGE
+            );
             return this.context.getInteractionResponder().errorResponse();
-        console.log(messageId);
+        }
+        //checking if messageId is present
+        if (!messageId || !messageId.value.trim()) {
+            await sendHelperNotification(
+                this.read,
+                this.modify,
+                user,
+                room!,
+                Messages.NO_ID
+            );
+            return this.context.getInteractionResponder().errorResponse();
+        }
 
+        //checking if messageId is of one word
+        if (messageId.value.trim().split(" ").length > 1) {
+            await sendHelperNotification(
+                this.read,
+                this.modify,
+                user,
+                room!,
+                Messages.SINGLE_WORD_ID
+            );
+            return this.context.getInteractionResponder().errorResponse();
+        }
         // await modalInteraction.clearState(SaveMessage.ID_INPUT_ACTION);
         // await modalInteraction.clearState(SaveMessage.MESSAGE_INPUT_ACTION);
         const currentReply = { id: messageId.value, message: message.value };
@@ -120,12 +153,33 @@ export class ExecuteBlockActionHandler {
         if (!oldValue) newValues = [currentReply];
         else {
             const { value } = oldValue;
+            //checking if messageId is unique
+            const isUnique = value.every(
+                (reply) => reply.id !== messageId.value
+            );
+            if (!isUnique) {
+                await sendHelperNotification(
+                    this.read,
+                    this.modify,
+                    user,
+                    room!,
+                    Messages.UNIQUE_ID
+                );
+                return this.context.getInteractionResponder().errorResponse();
+            }
             newValues = [currentReply, ...value];
         }
 
         await modalInteraction.storeSavedRepliesState(SaveMessage.VIEW_ID, {
             value: newValues,
         });
+        await sendHelperNotification(
+            this.read,
+            this.modify,
+            user,
+            room!,
+            Messages.SAVED
+        );
         return this.handleUpdateOfSaveMessageContextualBar(modalInteraction);
     }
 

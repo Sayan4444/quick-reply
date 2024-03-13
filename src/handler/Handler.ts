@@ -13,6 +13,8 @@ import { IMessage } from "@rocket.chat/apps-engine/definition/messages";
 import { ModalInteractionStorage } from "../storage/ModalInteractionStorage";
 import { createSaveMessageContextualBar } from "../modal/createSaveMessageContextualBar";
 import { SaveMessage } from "../../enum/modals/SaveMessage";
+import { sendHelperNotification } from "../helper/message";
+import { Messages } from "../../enum/messages";
 
 export class Handler implements IHandler {
     public app: QuickReplyApp;
@@ -23,6 +25,7 @@ export class Handler implements IHandler {
     public http: IHttp;
     public persis: IPersistence;
     public roomInteractionStorage: RoomInteractionStorage;
+    public modalInteraction: ModalInteractionStorage;
     public triggerId?: string;
     public threadId?: string;
 
@@ -41,6 +44,10 @@ export class Handler implements IHandler {
             params.persis,
             persistenceRead,
             params.sender.id
+        );
+        this.modalInteraction = new ModalInteractionStorage(
+            this.persis,
+            persistenceRead
         );
     }
 
@@ -74,5 +81,45 @@ export class Handler implements IHandler {
                 this.sender
             );
         }
+    }
+
+    public async getMessageById(id: string): Promise<void> {
+        const persistenceRead = this.read.getPersistenceReader();
+        const modalInteraction = new ModalInteractionStorage(
+            this.persis,
+            persistenceRead
+        );
+        const savedReplies = await modalInteraction.getSavedRepliesState(
+            SaveMessage.VIEW_ID
+        );
+        if (!savedReplies) {
+            await sendHelperNotification(
+                this.read,
+                this.modify,
+                this.sender,
+                this.room,
+                Messages.NO_MESSAGE_FOUND_ID
+            );
+            return;
+        }
+        const { value } = savedReplies;
+        const reply = value.find((reply) => reply.id === id);
+        if (!reply) {
+            await sendHelperNotification(
+                this.read,
+                this.modify,
+                this.sender,
+                this.room,
+                Messages.NO_MESSAGE_FOUND_ID
+            );
+            return;
+        }
+        await sendHelperNotification(
+            this.read,
+            this.modify,
+            this.sender,
+            this.room,
+            reply?.message!
+        );
     }
 }

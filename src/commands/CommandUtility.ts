@@ -114,30 +114,22 @@ export class CommandUtility implements ICommandUtility {
     }
 
     private async handleDualParam(handler: Handler): Promise<void> {
-        // const [param, subparam] = this.params;
-        // switch (param.toLowerCase()) {
-        //     case CommandParam.CREATE: {
-        //         if (subparam.toLowerCase() === SubCommandParam.DATABASE) {
-        //             await handler.createNotionDatabase();
-        //             return;
-        //         }
-        //         await sendHelperNotification(
-        //             this.read,
-        //             this.modify,
-        //             this.sender,
-        //             this.room
-        //         );
-        //         break;
-        //     }
-        //     default: {
-        //         await sendHelperNotification(
-        //             this.read,
-        //             this.modify,
-        //             this.sender,
-        //             this.room
-        //         );
-        //         break;
-        //     }
-        // }
+        switch (this.params[0].toLowerCase()) {
+            case CommandParam.ID: {
+                await handler.getMessageById(this.params[1].toLowerCase());
+                break;
+            }
+
+            default: {
+                await sendHelperNotification(
+                    this.read,
+                    this.modify,
+                    this.sender,
+                    this.room,
+                    "No such command"
+                );
+                break;
+            }
+        }
     }
 }

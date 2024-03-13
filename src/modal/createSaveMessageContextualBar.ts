@@ -1,6 +1,6 @@
 import { IUIKitSurfaceViewParam } from "@rocket.chat/apps-engine/definition/accessors";
 import { QuickReplyApp } from "../../QuickReplyApp";
-import { ModalInteractionStorage } from "../storage/ModalInteraction";
+import { ModalInteractionStorage } from "../storage/ModalInteractionStorage";
 import { Block, SectionBlock, TextObjectType } from "@rocket.chat/ui-kit";
 import { inputElementComponent } from "./common/inputElementComponent";
 import {

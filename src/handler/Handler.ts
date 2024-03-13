@@ -10,7 +10,7 @@ import {
 } from "@rocket.chat/apps-engine/definition/accessors";
 import { RoomInteractionStorage } from "../storage/RoomInteraction";
 import { IMessage } from "@rocket.chat/apps-engine/definition/messages";
-import { ModalInteractionStorage } from "../storage/ModalInteraction";
+import { ModalInteractionStorage } from "../storage/ModalInteractionStorage";
 import { createSaveMessageContextualBar } from "../modal/createSaveMessageContextualBar";
 import { SaveMessage } from "../../enum/modals/SaveMessage";
 

@@ -9,7 +9,7 @@ import {
     IPersistence,
     IRead,
 } from "@rocket.chat/apps-engine/definition/accessors";
-import { ModalInteractionStorage } from "../storage/ModalInteraction";
+import { ModalInteractionStorage } from "../storage/ModalInteractionStorage";
 import { RoomInteractionStorage } from "../storage/RoomInteraction";
 import { SaveMessage } from "../../enum/modals/SaveMessage";
 import { IRoom } from "@rocket.chat/apps-engine/definition/rooms";
@@ -32,7 +32,6 @@ export class ExecuteBlockActionHandler {
     public async handleActions(): Promise<IUIKitResponse> {
         const { actionId, user, room, container, blockId } =
             this.context.getInteractionData();
-        console.log("interaction data", this.context.getInteractionData());
 
         const persistenceRead = this.read.getPersistenceReader();
         const modalInteraction = new ModalInteractionStorage(

@@ -15,9 +15,17 @@ import { IAppUtils } from "./definition/lib/IAppUtils";
 import QuickReplyCommand from "./src/commands/QuickReplyCommand";
 import {
     IUIKitResponse,
+    UIKitActionButtonInteractionContext,
     UIKitBlockInteractionContext,
 } from "@rocket.chat/apps-engine/definition/uikit";
 import { ExecuteBlockActionHandler } from "./src/handler/ExecuteBlockActionHandler";
+import {
+    IUIActionButtonDescriptor,
+    UIActionButtonContext,
+} from "@rocket.chat/apps-engine/definition/ui";
+import { ActionButton } from "./enum/ActionButtons";
+import { ExecuteActionButtonHandler } from "./src/handler/ExecuteActionButtonHandler";
+import { IMessageAction } from "@rocket.chat/apps-engine/definition/messages";
 
 export class QuickReplyApp extends App {
     private elementBuilder: ElementBuilder;
@@ -34,6 +42,13 @@ export class QuickReplyApp extends App {
 
         this.elementBuilder = new ElementBuilder(this.getID());
         this.blockBuilder = new BlockBuilder(this.getID());
+
+        const aiReply: IUIActionButtonDescriptor = {
+            actionId: ActionButton.AI_REPLY_ACTION,
+            labelI18n: ActionButton.AI_REPLY_LABEL,
+            context: UIActionButtonContext.MESSAGE_ACTION,
+        };
+        configurationExtend.ui.registerButton(aiReply);
     }
 
     public getUtils(): IAppUtils {
@@ -51,6 +66,25 @@ export class QuickReplyApp extends App {
         modify: IModify
     ): Promise<IUIKitResponse> {
         const handler = new ExecuteBlockActionHandler(
+            this,
+            read,
+            http,
+            persistence,
+            modify,
+            context
+        );
+
+        return await handler.handleActions();
+    }
+
+    public async executeActionButtonHandler(
+        context: UIKitActionButtonInteractionContext,
+        read: IRead,
+        http: IHttp,
+        persistence: IPersistence,
+        modify: IModify
+    ): Promise<IUIKitResponse> {
+        const handler = new ExecuteActionButtonHandler(
             this,
             read,
             http,

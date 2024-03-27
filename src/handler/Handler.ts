@@ -8,13 +8,12 @@ import {
     IPersistence,
     IRead,
 } from "@rocket.chat/apps-engine/definition/accessors";
-import { RoomInteractionStorage } from "../storage/RoomInteraction";
-import { IMessage } from "@rocket.chat/apps-engine/definition/messages";
 import { ModalInteractionStorage } from "../storage/ModalInteractionStorage";
 import { createSaveMessageContextualBar } from "../modal/createSaveMessageContextualBar";
 import { SaveMessage } from "../../enum/modals/SaveMessage";
 import { sendHelperNotification } from "../helper/message";
 import { Messages } from "../../enum/messages";
+import { aiReplyContextualBar } from "../modal/aiReplyContextualBar";
 
 export class Handler implements IHandler {
     public app: QuickReplyApp;
@@ -24,7 +23,6 @@ export class Handler implements IHandler {
     public modify: IModify;
     public http: IHttp;
     public persis: IPersistence;
-    public roomInteractionStorage: RoomInteractionStorage;
     public modalInteraction: ModalInteractionStorage;
     public triggerId?: string;
     public threadId?: string;
@@ -40,11 +38,6 @@ export class Handler implements IHandler {
         this.triggerId = params.triggerId;
         this.threadId = params.threadId;
         const persistenceRead = params.read.getPersistenceReader();
-        this.roomInteractionStorage = new RoomInteractionStorage(
-            params.persis,
-            persistenceRead,
-            params.sender.id
-        );
         this.modalInteraction = new ModalInteractionStorage(
             this.persis,
             persistenceRead
@@ -121,5 +114,25 @@ export class Handler implements IHandler {
             this.room,
             reply?.message!
         );
+    }
+    public async generateAiReply(text: string | undefined): Promise<void> {
+        const contextualBar = await aiReplyContextualBar(this.app);
+
+        if (contextualBar instanceof Error) {
+            this.app.getLogger().error(contextualBar.message);
+            return;
+        }
+
+        const triggerId = this.triggerId;
+
+        if (triggerId) {
+            await this.modify.getUiController().openSurfaceView(
+                contextualBar,
+                {
+                    triggerId,
+                },
+                this.sender
+            );
+        }
     }
 }

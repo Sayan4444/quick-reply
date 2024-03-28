@@ -1,7 +1,7 @@
 export enum CommandParam {
     SAVE = "save",
     HELP = "help",
-    ID = "id",
+    ID = "-id",
     DELETE = "--d",
-    UPDATE = "--u",
+    SAVE_MESSAGE = "--s",
 }

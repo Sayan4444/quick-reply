@@ -142,11 +142,23 @@ export class CommandUtility implements ICommandUtility {
         if (
             this.params[0].toLowerCase() === CommandParam.ID &&
             (this.params[2].toLowerCase() === CommandParam.DELETE ||
-                this.params[2].toLowerCase() === CommandParam.UPDATE)
+                this.params[2].toLowerCase() === CommandParam.SAVE_MESSAGE)
         ) {
             const id = this.params[1].toLowerCase();
             if (this.params[2].toLowerCase() === CommandParam.DELETE) {
                 await handler.deleteMessageById(id);
+            } else if (
+                this.params[2].toLowerCase() === CommandParam.SAVE_MESSAGE
+            ) {
+                await handler.saveMessageById(id, this.params[3]);
+            } else {
+                await sendHelperNotification(
+                    this.read,
+                    this.modify,
+                    this.sender,
+                    this.room,
+                    "No such command"
+                );
             }
         } else
             await sendHelperNotification(

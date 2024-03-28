@@ -11,7 +11,11 @@ import {
 import { ModalInteractionStorage } from "../storage/ModalInteractionStorage";
 import { createSaveMessageContextualBar } from "../modal/createSaveMessageContextualBar";
 import { SaveMessage } from "../../enum/modals/SaveMessage";
-import { generateAiReply, sendHelperNotification } from "../helper/message";
+import {
+    generateAiReply,
+    sendHelperNotification,
+    sendMessageInRoom,
+} from "../helper/message";
 import { Messages } from "../../enum/messages";
 import { createAiReplyContextualBar } from "../modal/createAiReplyContextualBar";
 import { AiReply } from "../../enum/modals/AiReply";
@@ -108,7 +112,7 @@ export class Handler implements IHandler {
             );
             return;
         }
-        await sendHelperNotification(
+        await sendMessageInRoom(
             this.read,
             this.modify,
             this.sender,
@@ -141,7 +145,52 @@ export class Handler implements IHandler {
             );
         }
     }
-
+    public async saveMessageById(id: string, message: string): Promise<void> {
+        const currentReply = { id, message };
+        const oldValue = await this.modalInteraction.getSavedRepliesState(
+            SaveMessage.VIEW_ID
+        );
+        let newValues: {
+            id: string;
+            message: string;
+        }[];
+        if (!oldValue) newValues = [currentReply];
+        else {
+            const { value } = oldValue;
+            newValues = [...value];
+            //checking if messageId is unique
+            let isUnique = true;
+            for (let i = 0; i < value.length; i++) {
+                if (value[i].id === id) {
+                    newValues[i].message = message;
+                    isUnique = false;
+                    await sendHelperNotification(
+                        this.read,
+                        this.modify,
+                        this.sender,
+                        this.room,
+                        Messages.UPDATED
+                    );
+                }
+            }
+            if (isUnique) {
+                newValues = [currentReply, ...value];
+                await sendHelperNotification(
+                    this.read,
+                    this.modify,
+                    this.sender,
+                    this.room,
+                    Messages.SAVED
+                );
+            }
+        }
+        await this.modalInteraction.storeSavedRepliesState(
+            SaveMessage.VIEW_ID,
+            {
+                value: newValues,
+            }
+        );
+    }
     public async generateAiReply(http: IHttp, text: string): Promise<void> {
         const persistenceRead = this.read.getPersistenceReader();
         const modalInteraction = new ModalInteractionStorage(

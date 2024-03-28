@@ -57,7 +57,7 @@ export class ExecuteBlockActionHandler {
         );
         switch (actionId) {
             case SaveMessage.SAVE_BUTTON_ACTION: {
-                this.handleSaveMessage(modalInteraction);
+                this.handleSaveMessage(modalInteraction, handler);
                 break;
             }
             case SaveMessage.ID_INPUT_ACTION: {
@@ -125,15 +125,16 @@ export class ExecuteBlockActionHandler {
     }
 
     private async handleSaveMessage(
-        modalInteraction: ModalInteractionStorage
+        modalInteraction: ModalInteractionStorage,
+        handler: Handler
     ): Promise<IUIKitResponse> {
+        const { user, room } = this.context.getInteractionData();
         const messageId = await modalInteraction.getInputState(
             SaveMessage.ID_INPUT_ACTION
         );
         const message = await modalInteraction.getInputState(
             SaveMessage.MESSAGE_INPUT_ACTION
         );
-        const { user, room } = this.context.getInteractionData();
         //check if message is present
         if (!message || !message.value.trim()) {
             await sendHelperNotification(
@@ -168,43 +169,6 @@ export class ExecuteBlockActionHandler {
             );
             return this.context.getInteractionResponder().errorResponse();
         }
-        // await modalInteraction.clearState(SaveMessage.ID_INPUT_ACTION);
-        // await modalInteraction.clearState(SaveMessage.MESSAGE_INPUT_ACTION);
-        const currentReply = { id: messageId.value, message: message.value };
-        const oldValue = await modalInteraction.getSavedRepliesState(
-            SaveMessage.VIEW_ID
-        );
-        let newValues;
-        if (!oldValue) newValues = [currentReply];
-        else {
-            const { value } = oldValue;
-            //checking if messageId is unique
-            const isUnique = value.every(
-                (reply) => reply.id !== messageId.value
-            );
-            if (!isUnique) {
-                await sendHelperNotification(
-                    this.read,
-                    this.modify,
-                    user,
-                    room!,
-                    Messages.UNIQUE_ID
-                );
-                return this.context.getInteractionResponder().errorResponse();
-            }
-            newValues = [currentReply, ...value];
-        }
-
-        await modalInteraction.storeSavedRepliesState(SaveMessage.VIEW_ID, {
-            value: newValues,
-        });
-        await sendHelperNotification(
-            this.read,
-            this.modify,
-            user,
-            room!,
-            Messages.SAVED
-        );
         return this.handleUpdateOfSaveMessageContextualBar(modalInteraction);
     }
 
@@ -237,16 +201,6 @@ export class ExecuteBlockActionHandler {
     ): Promise<IUIKitResponse> {
         const { value: id } = this.context.getInteractionData();
         await handler.deleteMessageById(id!);
-        // const savedReplies = await modalInteraction.getSavedRepliesState(
-        //     SaveMessage.VIEW_ID
-        // );
-        // if (savedReplies) {
-        //     const { value } = savedReplies;
-        //     const newReplies = value.filter((reply) => reply.id !== id);
-        //     await modalInteraction.storeSavedRepliesState(SaveMessage.VIEW_ID, {
-        //         value: newReplies,
-        //     });
-        // }
         return this.handleUpdateOfSaveMessageContextualBar(modalInteraction);
     }
     private async handleGenerateAiReply(

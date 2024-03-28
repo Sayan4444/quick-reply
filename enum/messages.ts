@@ -14,4 +14,5 @@ export enum Messages {
     SINGLE_WORD_ID = "Id should be a single word",
     SAVED = "Reply Saved",
     NO_MESSAGE_FOUND_ID = "No saved message found with this id",
+    DELETE_SUCCESS = "Message deleted successfully",
 }

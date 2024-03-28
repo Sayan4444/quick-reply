@@ -72,6 +72,11 @@ export class CommandUtility implements ICommandUtility {
                 await this.handleDualParam(handler);
                 break;
             }
+            case 3:
+            case 4: {
+                await this.handleMultipleParams(handler);
+                break;
+            }
             default: {
                 await sendHelperNotification(
                     this.read,
@@ -131,5 +136,25 @@ export class CommandUtility implements ICommandUtility {
                 break;
             }
         }
+    }
+
+    private async handleMultipleParams(handler: Handler): Promise<void> {
+        if (
+            this.params[0].toLowerCase() === CommandParam.ID &&
+            (this.params[2].toLowerCase() === CommandParam.DELETE ||
+                this.params[2].toLowerCase() === CommandParam.UPDATE)
+        ) {
+            const id = this.params[1].toLowerCase();
+            if (this.params[2].toLowerCase() === CommandParam.DELETE) {
+                await handler.deleteMessageById(id);
+            }
+        } else
+            await sendHelperNotification(
+                this.read,
+                this.modify,
+                this.sender,
+                this.room,
+                "No such command"
+            );
     }
 }

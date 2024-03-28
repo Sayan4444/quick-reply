@@ -20,6 +20,7 @@ import {
 import { Messages } from "../../enum/messages";
 import { AiReply } from "../../enum/modals/AiReply";
 import { createAiReplyContextualBar } from "../modal/createAiReplyContextualBar";
+import { Handler } from "./Handler";
 
 export class ExecuteBlockActionHandler {
     private context: UIKitBlockInteractionContext;
@@ -35,7 +36,19 @@ export class ExecuteBlockActionHandler {
     }
 
     public async handleActions(): Promise<IUIKitResponse> {
-        const { actionId } = this.context.getInteractionData();
+        const { actionId, user, room, triggerId, message } =
+            this.context.getInteractionData();
+
+        const handler = new Handler({
+            app: this.app,
+            sender: user,
+            room: room!,
+            read: this.read,
+            modify: this.modify,
+            http: this.http,
+            persis: this.persistence,
+            triggerId,
+        });
 
         const persistenceRead = this.read.getPersistenceReader();
         const modalInteraction = new ModalInteractionStorage(
@@ -54,7 +67,7 @@ export class ExecuteBlockActionHandler {
                 return this.handleMessageInputAction(modalInteraction);
             }
             case SaveMessage.DELETE_BUTTON_ACTION: {
-                return this.handleDeleteButtonAction(modalInteraction);
+                return this.handleDeleteButtonAction(modalInteraction, handler);
             }
 
             case AiReply.GENERATE_BUTTON_ACTION: {
@@ -219,19 +232,21 @@ export class ExecuteBlockActionHandler {
         return this.context.getInteractionResponder().successResponse();
     }
     private async handleDeleteButtonAction(
-        modalInteraction: ModalInteractionStorage
+        modalInteraction: ModalInteractionStorage,
+        handler: Handler
     ): Promise<IUIKitResponse> {
         const { value: id } = this.context.getInteractionData();
-        const savedReplies = await modalInteraction.getSavedRepliesState(
-            SaveMessage.VIEW_ID
-        );
-        if (savedReplies) {
-            const { value } = savedReplies;
-            const newReplies = value.filter((reply) => reply.id !== id);
-            await modalInteraction.storeSavedRepliesState(SaveMessage.VIEW_ID, {
-                value: newReplies,
-            });
-        }
+        await handler.deleteMessageById(id!);
+        // const savedReplies = await modalInteraction.getSavedRepliesState(
+        //     SaveMessage.VIEW_ID
+        // );
+        // if (savedReplies) {
+        //     const { value } = savedReplies;
+        //     const newReplies = value.filter((reply) => reply.id !== id);
+        //     await modalInteraction.storeSavedRepliesState(SaveMessage.VIEW_ID, {
+        //         value: newReplies,
+        //     });
+        // }
         return this.handleUpdateOfSaveMessageContextualBar(modalInteraction);
     }
     private async handleGenerateAiReply(

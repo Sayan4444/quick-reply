@@ -116,6 +116,32 @@ export class Handler implements IHandler {
             reply?.message!
         );
     }
+    public async deleteMessageById(id: string): Promise<void> {
+        const persistenceRead = this.read.getPersistenceReader();
+        const modalInteraction = new ModalInteractionStorage(
+            this.persis,
+            persistenceRead
+        );
+        const savedReplies = await modalInteraction.getSavedRepliesState(
+            SaveMessage.VIEW_ID
+        );
+        if (savedReplies) {
+            const { value } = savedReplies;
+            const newReplies = value.filter((reply) => reply.id !== id);
+            await modalInteraction.storeSavedRepliesState(SaveMessage.VIEW_ID, {
+                value: newReplies,
+            });
+
+            await sendHelperNotification(
+                this.read,
+                this.modify,
+                this.sender,
+                this.room,
+                Messages.DELETE_SUCCESS
+            );
+        }
+    }
+
     public async generateAiReply(http: IHttp, text: string): Promise<void> {
         const persistenceRead = this.read.getPersistenceReader();
         const modalInteraction = new ModalInteractionStorage(

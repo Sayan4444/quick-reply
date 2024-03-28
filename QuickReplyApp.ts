@@ -17,6 +17,8 @@ import {
     IUIKitResponse,
     UIKitActionButtonInteractionContext,
     UIKitBlockInteractionContext,
+    UIKitViewCloseInteractionContext,
+    UIKitViewSubmitInteractionContext,
 } from "@rocket.chat/apps-engine/definition/uikit";
 import { ExecuteBlockActionHandler } from "./src/handler/ExecuteBlockActionHandler";
 import {
@@ -25,7 +27,9 @@ import {
 } from "@rocket.chat/apps-engine/definition/ui";
 import { ActionButton } from "./enum/ActionButtons";
 import { ExecuteActionButtonHandler } from "./src/handler/ExecuteActionButtonHandler";
-import { IMessageAction } from "@rocket.chat/apps-engine/definition/messages";
+import { ExecuteViewClosedHandler } from "./src/handler/ExecuteViewClosedHandler";
+import { ExecuteViewSubmitHandler } from "./src/handler/ExecuteViewSubmitHandler";
+import { LLMSetting, settings } from "./config/settings";
 
 export class QuickReplyApp extends App {
     private elementBuilder: ElementBuilder;
@@ -39,6 +43,8 @@ export class QuickReplyApp extends App {
         await configurationExtend.slashCommands.provideSlashCommand(
             new QuickReplyCommand(this)
         );
+
+        await configurationExtend.settings.provideSetting(settings);
 
         this.elementBuilder = new ElementBuilder(this.getID());
         this.blockBuilder = new BlockBuilder(this.getID());
@@ -85,6 +91,44 @@ export class QuickReplyApp extends App {
         modify: IModify
     ): Promise<IUIKitResponse> {
         const handler = new ExecuteActionButtonHandler(
+            this,
+            read,
+            http,
+            persistence,
+            modify,
+            context
+        );
+
+        return await handler.handleActions();
+    }
+
+    public async executeViewSubmitHandler(
+        context: UIKitViewSubmitInteractionContext,
+        read: IRead,
+        http: IHttp,
+        persistence: IPersistence,
+        modify: IModify
+    ): Promise<IUIKitResponse> {
+        const handler = new ExecuteViewSubmitHandler(
+            this,
+            read,
+            http,
+            persistence,
+            modify,
+            context
+        );
+
+        return await handler.handleActions();
+    }
+
+    public async executeViewClosedHandler(
+        context: UIKitViewCloseInteractionContext,
+        read: IRead,
+        http: IHttp,
+        persistence: IPersistence,
+        modify: IModify
+    ): Promise<IUIKitResponse> {
+        const handler = new ExecuteViewClosedHandler(
             this,
             read,
             http,

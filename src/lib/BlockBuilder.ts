@@ -52,6 +52,13 @@ export class BlockBuilder implements IBlockBuilder {
         });
     }
 
+    public createHeading(heading: string): TextObject {
+        return {
+            type: TextObjectType.MRKDWN,
+            text: heading,
+        };
+    }
+
     public createPreviewBlock(
         param: PreviewBlockParam
     ): PreviewBlockBase | PreviewBlockWithThumb {

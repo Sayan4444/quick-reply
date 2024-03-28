@@ -12,6 +12,7 @@ import { Handler } from "./Handler";
 import { IMessage } from "@rocket.chat/apps-engine/definition/messages";
 import { QuickReplyApp } from "../../QuickReplyApp";
 import { ActionButton } from "../../enum/ActionButtons";
+import { sendHelperNotification } from "../helper/message";
 
 export class ExecuteActionButtonHandler {
     private context: UIKitActionButtonInteractionContext;
@@ -43,7 +44,20 @@ export class ExecuteActionButtonHandler {
 
         switch (actionId) {
             case ActionButton.AI_REPLY_ACTION: {
-                await handler.generateAiReply(message?.text);
+                if (!message || !message.text) {
+                    sendHelperNotification(
+                        this.read,
+                        this.modify,
+                        user,
+                        room,
+                        "Please provide a message to generate an AI reply."
+                    );
+                    return this.context
+                        .getInteractionResponder()
+                        .errorResponse();
+                }
+                await handler.generateAiReply(this.http, message.text);
+
                 break;
             }
         }

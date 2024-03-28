@@ -12,8 +12,14 @@ import {
 import { ModalInteractionStorage } from "../storage/ModalInteractionStorage";
 import { SaveMessage } from "../../enum/modals/SaveMessage";
 import { createSaveMessageContextualBar } from "../modal/createSaveMessageContextualBar";
-import { sendHelperNotification } from "../helper/message";
+import {
+    generateAiReply,
+    sendHelperNotification,
+    sendMessageInRoom,
+} from "../helper/message";
 import { Messages } from "../../enum/messages";
+import { AiReply } from "../../enum/modals/AiReply";
+import { createAiReplyContextualBar } from "../modal/createAiReplyContextualBar";
 
 export class ExecuteBlockActionHandler {
     private context: UIKitBlockInteractionContext;
@@ -49,6 +55,14 @@ export class ExecuteBlockActionHandler {
             }
             case SaveMessage.DELETE_BUTTON_ACTION: {
                 return this.handleDeleteButtonAction(modalInteraction);
+            }
+
+            case AiReply.GENERATE_BUTTON_ACTION: {
+                return this.handleGenerateAiReply(modalInteraction);
+            }
+
+            case AiReply.SEND_BUTTON_ACTION: {
+                return this.handleSendAiMessage(modalInteraction);
             }
         }
         return this.context.getInteractionResponder().successResponse();
@@ -219,5 +233,51 @@ export class ExecuteBlockActionHandler {
             });
         }
         return this.handleUpdateOfSaveMessageContextualBar(modalInteraction);
+    }
+    private async handleGenerateAiReply(
+        modalInteraction: ModalInteractionStorage
+    ): Promise<IUIKitResponse> {
+        const { user, triggerId } = this.context.getInteractionData();
+        const { value } = (await modalInteraction.getInputState(
+            AiReply.PROMPT_INPUT_ACTION
+        ))!;
+        const response = await generateAiReply(this.read, this.http, value);
+        const aiReply = response.data.candidates[0].content.parts[0].text;
+        const contextualBar = await createAiReplyContextualBar(
+            this.app,
+            modalInteraction,
+            value,
+            aiReply
+        );
+
+        await modalInteraction.storeInputState(
+            AiReply.REPLY_MESSAGE_INPUT_ACTION,
+            {
+                value: aiReply,
+            }
+        );
+
+        if (contextualBar instanceof Error) {
+            this.app.getLogger().error(contextualBar.message);
+            return this.context.getInteractionResponder().errorResponse();
+        }
+        await this.modify.getUiController().updateSurfaceView(
+            contextualBar,
+            {
+                triggerId,
+            },
+            user
+        );
+        return this.context.getInteractionResponder().successResponse();
+    }
+    private async handleSendAiMessage(
+        modalInteraction: ModalInteractionStorage
+    ): Promise<IUIKitResponse> {
+        const { user, triggerId, room } = this.context.getInteractionData();
+        const { value } = (await modalInteraction.getInputState(
+            AiReply.REPLY_MESSAGE_INPUT_ACTION
+        ))!;
+        await sendMessageInRoom(this.read, this.modify, user, room!, value);
+        return this.context.getInteractionResponder().successResponse();
     }
 }

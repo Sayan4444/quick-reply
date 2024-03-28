@@ -11,9 +11,10 @@ import {
 import { ModalInteractionStorage } from "../storage/ModalInteractionStorage";
 import { createSaveMessageContextualBar } from "../modal/createSaveMessageContextualBar";
 import { SaveMessage } from "../../enum/modals/SaveMessage";
-import { sendHelperNotification } from "../helper/message";
+import { generateAiReply, sendHelperNotification } from "../helper/message";
 import { Messages } from "../../enum/messages";
-import { aiReplyContextualBar } from "../modal/aiReplyContextualBar";
+import { createAiReplyContextualBar } from "../modal/createAiReplyContextualBar";
+import { AiReply } from "../../enum/modals/AiReply";
 
 export class Handler implements IHandler {
     public app: QuickReplyApp;
@@ -115,8 +116,20 @@ export class Handler implements IHandler {
             reply?.message!
         );
     }
-    public async generateAiReply(text: string | undefined): Promise<void> {
-        const contextualBar = await aiReplyContextualBar(this.app);
+    public async generateAiReply(http: IHttp, text: string): Promise<void> {
+        const persistenceRead = this.read.getPersistenceReader();
+        const modalInteraction = new ModalInteractionStorage(
+            this.persis,
+            persistenceRead
+        );
+        await modalInteraction.storeInputState(AiReply.PROMPT_INPUT_ACTION, {
+            value: text,
+        });
+        const contextualBar = await createAiReplyContextualBar(
+            this.app,
+            modalInteraction,
+            text
+        );
 
         if (contextualBar instanceof Error) {
             this.app.getLogger().error(contextualBar.message);

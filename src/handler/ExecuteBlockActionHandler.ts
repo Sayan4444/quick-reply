@@ -60,11 +60,11 @@ export class ExecuteBlockActionHandler {
                 this.handleSaveMessage(modalInteraction, handler);
                 break;
             }
-            case SaveMessage.ID_INPUT_ACTION: {
-                return this.handleIdInputAction(modalInteraction);
-            }
-            case SaveMessage.MESSAGE_INPUT_ACTION: {
-                return this.handleMessageInputAction(modalInteraction);
+            case SaveMessage.ID_INPUT_ACTION:
+            case SaveMessage.MESSAGE_INPUT_ACTION:
+            case AiReply.PROMPT_INPUT_ACTION:
+            case AiReply.REPLY_MESSAGE_INPUT_ACTION: {
+                return this.handleInputAction(modalInteraction, actionId);
             }
             case SaveMessage.DELETE_BUTTON_ACTION: {
                 return this.handleDeleteButtonAction(modalInteraction, handler);
@@ -81,20 +81,18 @@ export class ExecuteBlockActionHandler {
         return this.context.getInteractionResponder().successResponse();
     }
 
-    private async handleIdInputAction(
-        modalInteraction: ModalInteractionStorage
+    private async handleInputAction(
+        modalInteraction: ModalInteractionStorage,
+        actionId: string
     ): Promise<IUIKitResponse> {
         const { value, container } = this.context.getInteractionData();
 
         if (value) {
-            await modalInteraction.storeInputState(
-                SaveMessage.ID_INPUT_ACTION,
-                {
-                    value,
-                }
-            );
+            await modalInteraction.storeInputState(actionId, {
+                value,
+            });
         } else {
-            await modalInteraction.clearState(SaveMessage.ID_INPUT_ACTION);
+            await modalInteraction.clearState(actionId);
         }
 
         return this.context.getInteractionResponder().viewErrorResponse({
@@ -132,6 +130,7 @@ export class ExecuteBlockActionHandler {
         const messageId = await modalInteraction.getInputState(
             SaveMessage.ID_INPUT_ACTION
         );
+
         const message = await modalInteraction.getInputState(
             SaveMessage.MESSAGE_INPUT_ACTION
         );
@@ -169,6 +168,7 @@ export class ExecuteBlockActionHandler {
             );
             return this.context.getInteractionResponder().errorResponse();
         }
+        await handler.saveMessageById(messageId.value, message.value);
         return this.handleUpdateOfSaveMessageContextualBar(modalInteraction);
     }
 

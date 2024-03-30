@@ -51,16 +51,14 @@ export class Handler implements IHandler {
 
     public async saveQuickReply(): Promise<void> {
         const persistenceRead = this.read.getPersistenceReader();
-        const modalInteraction = new ModalInteractionStorage(
-            this.persis,
-            persistenceRead
+        await this.modalInteraction.clearState(SaveMessage.ID_INPUT_ACTION);
+        await this.modalInteraction.clearState(
+            SaveMessage.MESSAGE_INPUT_ACTION
         );
-        await modalInteraction.clearState(SaveMessage.ID_INPUT_ACTION);
-        await modalInteraction.clearState(SaveMessage.MESSAGE_INPUT_ACTION);
 
         const contextualBar = await createSaveMessageContextualBar(
             this.app,
-            modalInteraction
+            this.modalInteraction
         );
 
         if (contextualBar instanceof Error) {
@@ -83,11 +81,7 @@ export class Handler implements IHandler {
 
     public async getMessageById(id: string): Promise<void> {
         const persistenceRead = this.read.getPersistenceReader();
-        const modalInteraction = new ModalInteractionStorage(
-            this.persis,
-            persistenceRead
-        );
-        const savedReplies = await modalInteraction.getSavedRepliesState(
+        const savedReplies = await this.modalInteraction.getSavedRepliesState(
             SaveMessage.VIEW_ID
         );
         if (!savedReplies) {
@@ -121,20 +115,18 @@ export class Handler implements IHandler {
         );
     }
     public async deleteMessageById(id: string): Promise<void> {
-        const persistenceRead = this.read.getPersistenceReader();
-        const modalInteraction = new ModalInteractionStorage(
-            this.persis,
-            persistenceRead
-        );
-        const savedReplies = await modalInteraction.getSavedRepliesState(
+        const savedReplies = await this.modalInteraction.getSavedRepliesState(
             SaveMessage.VIEW_ID
         );
         if (savedReplies) {
             const { value } = savedReplies;
             const newReplies = value.filter((reply) => reply.id !== id);
-            await modalInteraction.storeSavedRepliesState(SaveMessage.VIEW_ID, {
-                value: newReplies,
-            });
+            await this.modalInteraction.storeSavedRepliesState(
+                SaveMessage.VIEW_ID,
+                {
+                    value: newReplies,
+                }
+            );
 
             await sendHelperNotification(
                 this.read,
@@ -143,7 +135,29 @@ export class Handler implements IHandler {
                 this.room,
                 Messages.DELETE_SUCCESS
             );
+            this.handleUpdateOfSaveMessageContextualBar(this.modalInteraction);
         }
+    }
+
+    private async handleUpdateOfSaveMessageContextualBar(
+        modalInteraction: ModalInteractionStorage
+    ): Promise<void> {
+        const contextualBar = await createSaveMessageContextualBar(
+            this.app,
+            modalInteraction
+        );
+        if (contextualBar instanceof Error) {
+            this.app.getLogger().error(contextualBar.message);
+            return;
+        }
+
+        await this.modify.getUiController().updateSurfaceView(
+            contextualBar,
+            {
+                triggerId: this.triggerId!,
+            },
+            this.sender
+        );
     }
     public async saveMessageById(id: string, message: string): Promise<void> {
         const currentReply = { id, message };
@@ -190,19 +204,21 @@ export class Handler implements IHandler {
                 value: newValues,
             }
         );
+        await this.handleUpdateOfSaveMessageContextualBar(
+            this.modalInteraction
+        );
     }
     public async generateAiReply(http: IHttp, text: string): Promise<void> {
         const persistenceRead = this.read.getPersistenceReader();
-        const modalInteraction = new ModalInteractionStorage(
-            this.persis,
-            persistenceRead
+        await this.modalInteraction.storeInputState(
+            AiReply.PROMPT_INPUT_ACTION,
+            {
+                value: text,
+            }
         );
-        await modalInteraction.storeInputState(AiReply.PROMPT_INPUT_ACTION, {
-            value: text,
-        });
         const contextualBar = await createAiReplyContextualBar(
             this.app,
-            modalInteraction,
+            this.modalInteraction,
             text
         );
 

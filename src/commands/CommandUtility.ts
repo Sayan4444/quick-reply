@@ -72,19 +72,9 @@ export class CommandUtility implements ICommandUtility {
                 await this.handleDualParam(handler);
                 break;
             }
-            case 3:
-            case 4: {
+            default: {
                 await this.handleMultipleParams(handler);
                 break;
-            }
-            default: {
-                await sendHelperNotification(
-                    this.read,
-                    this.modify,
-                    this.sender,
-                    this.room,
-                    "No such command"
-                );
             }
         }
     }
@@ -150,7 +140,11 @@ export class CommandUtility implements ICommandUtility {
             } else if (
                 this.params[2].toLowerCase() === CommandParam.SAVE_MESSAGE
             ) {
-                await handler.saveMessageById(id, this.params[3]);
+                let msg = "";
+                for (let i = 3; i < this.params.length; i++) {
+                    msg += " " + this.params[i];
+                }
+                await handler.saveMessageById(id, msg);
             } else {
                 await sendHelperNotification(
                     this.read,

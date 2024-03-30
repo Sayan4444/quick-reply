@@ -100,27 +100,6 @@ export class ExecuteBlockActionHandler {
             errors: {},
         });
     }
-    private async handleMessageInputAction(
-        modalInteraction: ModalInteractionStorage
-    ): Promise<IUIKitResponse> {
-        const { value, container } = this.context.getInteractionData();
-
-        if (value) {
-            await modalInteraction.storeInputState(
-                SaveMessage.MESSAGE_INPUT_ACTION,
-                {
-                    value,
-                }
-            );
-        } else {
-            await modalInteraction.clearState(SaveMessage.MESSAGE_INPUT_ACTION);
-        }
-
-        return this.context.getInteractionResponder().viewErrorResponse({
-            viewId: container.id,
-            errors: {},
-        });
-    }
 
     private async handleSaveMessage(
         modalInteraction: ModalInteractionStorage,

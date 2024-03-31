@@ -11,11 +11,7 @@ import {
 import { ModalInteractionStorage } from "../storage/ModalInteractionStorage";
 import { createSaveMessageContextualBar } from "../modal/createSaveMessageContextualBar";
 import { SaveMessage } from "../../enum/modals/SaveMessage";
-import {
-    generateAiReply,
-    sendHelperNotification,
-    sendMessageInRoom,
-} from "../helper/message";
+import { sendHelperNotification, sendMessageInRoom } from "../helper/message";
 import { Messages } from "../../enum/messages";
 import { createAiReplyContextualBar } from "../modal/createAiReplyContextualBar";
 import { AiReply } from "../../enum/modals/AiReply";
@@ -50,7 +46,6 @@ export class Handler implements IHandler {
     }
 
     public async saveQuickReply(): Promise<void> {
-        const persistenceRead = this.read.getPersistenceReader();
         await this.modalInteraction.clearState(SaveMessage.ID_INPUT_ACTION);
         await this.modalInteraction.clearState(
             SaveMessage.MESSAGE_INPUT_ACTION
@@ -80,7 +75,6 @@ export class Handler implements IHandler {
     }
 
     public async getMessageById(id: string): Promise<void> {
-        const persistenceRead = this.read.getPersistenceReader();
         const savedReplies = await this.modalInteraction.getSavedRepliesState(
             SaveMessage.VIEW_ID
         );
@@ -107,7 +101,6 @@ export class Handler implements IHandler {
             return;
         }
         await sendMessageInRoom(
-            this.read,
             this.modify,
             this.sender,
             this.room,

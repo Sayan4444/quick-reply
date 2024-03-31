@@ -31,10 +31,6 @@ export class ModalInteractionStorage implements IModalInteractionStorage {
         return result;
     }
     private async storeState(key: string, value: object): Promise<void> {
-        // you get key and value
-        // you find it in the storage
-        // if it exists, you update it
-        // if it doesn't exist, you create it
         const association = new RocketChatAssociationRecord(
             RocketChatAssociationModel.USER,
             key

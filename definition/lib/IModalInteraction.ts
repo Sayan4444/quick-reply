@@ -4,7 +4,6 @@ export interface IModalInteractionStorage {
     getInputState(key: string): Promise<IInputStatevalue | undefined>;
     getSavedRepliesState(key: string): Promise<ISavedReplies | undefined>;
     clearState(associate: string): Promise<void>;
-    // updateState(associate: string, state: object): Promise<void>; //internal
 }
 
 export interface IInputStatevalue {

@@ -28,13 +28,11 @@ export async function sendHelperNotification(
 }
 
 export async function sendMessageInRoom(
-    read: IRead,
     modify: IModify,
     user: IUser,
     room: IRoom,
     message: string
 ): Promise<void> {
-    const appUser = (await read.getUserReader().getAppUser()) as IUser;
     const messageStructure = modify.getCreator().startMessage();
     messageStructure.setSender(user).setRoom(room).setText(message);
     await modify.getCreator().finish(messageStructure);

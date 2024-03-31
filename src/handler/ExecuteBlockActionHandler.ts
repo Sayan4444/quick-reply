@@ -221,11 +221,11 @@ export class ExecuteBlockActionHandler {
     private async handleSendAiMessage(
         modalInteraction: ModalInteractionStorage
     ): Promise<IUIKitResponse> {
-        const { user, triggerId, room } = this.context.getInteractionData();
+        const { user, room } = this.context.getInteractionData();
         const { value } = (await modalInteraction.getInputState(
             AiReply.REPLY_MESSAGE_INPUT_ACTION
         ))!;
-        await sendMessageInRoom(this.read, this.modify, user, room!, value);
+        await sendMessageInRoom(this.modify, user, room!, value);
         return this.context.getInteractionResponder().successResponse();
     }
 }

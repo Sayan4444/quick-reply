@@ -12,9 +12,7 @@ import { ButtonInSectionComponent } from "./common/buttonInSectionComponent";
 
 export async function createSaveMessageContextualBar(
     app: QuickReplyApp,
-    modalInteraction: ModalInteractionStorage,
-    pageId?: string,
-    refresh?: boolean
+    modalInteraction: ModalInteractionStorage
 ): Promise<IUIKitSurfaceViewParam | Error> {
     const { elementBuilder, blockBuilder } = app.getUtils();
 
